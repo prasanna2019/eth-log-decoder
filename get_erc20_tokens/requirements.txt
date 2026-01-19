@@ -1,0 +1,5 @@
+web3
+requests
+pandas
+python-dotenv
+google-cloud-bigquery
