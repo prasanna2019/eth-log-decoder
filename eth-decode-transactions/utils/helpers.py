@@ -60,7 +60,7 @@ def table_exists():
 
 def get_block_number():
     query= f"""
-    SELECT max(blockNumber) from `{project_id}.{dataset_id}.{table_id}` 
+    SELECT max(blockNumber) FROM `{project_id}.{dataset_id}.{table_id}` WHERE processed_timestamp= TIMESTAMP_TRUNC(CURRENT_DATE, YEAR)
     """
     query_job = client.query(query)
     results = query_job.result()

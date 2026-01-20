@@ -17,30 +17,38 @@ if not logging.getLogger().handlers:
 logger = logging.getLogger(__name__)
 
 required_columns= {'address', 'blockTimestamp'}
-fromBlock = 17816428
-toBlock = 17816439
 
 
 def handler(event, context):
-    
-    logger.info("Starting handler for blocks %s to %s", fromBlock, toBlock)
     try:
         table_exists()
-        number= get_block_number()
         block_number= get_block_number()
-        to_block_number= int(block_number)+5
-        logs = get_logs(block_number, to_block_number)
+        
+        if block_number== None:
+            block_number= 1010 #default block number for first time
+            print(block_number)
     except Exception as e:
-        logs = get_logs(fromBlock, toBlock)
-    
-
-    logger.info("Fetched %d log entries", len(logs))
+        logger.exception("Failed to get last processed block number")
+        return
+    try:
+        to_block_number= int(block_number)+5
+        print(to_block_number)
+        logs = get_logs(block_number, to_block_number)
+        logger.info("Fetched %d log entries", len(logs))
+    except:
+        logger.exception("Failed to get block data")
     if(not bool(required_columns- set(logs.columns)) and not(logs.empty)):
-        # Faster for massive dataframes
+    # Faster for massive dataframes
         logs['blockTimestamp'] = logs['blockTimestamp'].str.replace('0x', '', regex=False).apply(int, base=16)
         logs['blockTimestamp'] = pd.to_datetime(logs['blockTimestamp'], unit='s')
-        result = ingest_logs(logs)
-        logger.info("Ingestion result: %s", result)
+        try:
+            result = ingest_logs(logs)
+            logger.info("Ingestion result: %s", result)
+        except Exception as e:
+            logger.exception("Failed to ingest block data")
+    else:
+        logger.info("Required columns missing in block data")
+
         return
     logger.info("Exiting without ingesting records")
     
